@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>chat</title>
+    <link rel="stylesheet" href="/static/layui/css/layui.css" media="all">
+    <link rel="stylesheet" href="/static/layui/css/layui.mobile.css" media="all">
+    <link href="/static/layui/css/modules/layer/default/layer.css" rel="stylesheet">
+    <link href="/static/admin/css/bootstrap.min.css?v=3.3.6" rel="stylesheet">
+    <link href="/static/admin/css/font-awesome.min.css?v=4.4.0" rel="stylesheet">
+    <link href="/static/admin/css/animate.min.css" rel="stylesheet">
+    <link href="/static/admin/css/style.min.css?v=4.1.0" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no">
+    <link rel="stylesheet" href="/static/layui/css/modules/layim/mobile/layim.css?v=2.10" media="all">
+</head>
+<body style="">
+<script src="/static/admin/js/jquery.min.js"></script>
+<script src="/static/layui/layui.js"></script>
+<script src="/static/layui/lay/modules/layer.js?v=3.1.1"></script>
+
+    <div class="layim-title" style="background-color: #36373C;">
+        <p><i class="layui-icon layim-chat-back" style="padding: 0px 15px" onclick="window.history.back()">&#xe603;</i> 添加好友<span class="layim-chat-status"></span></p>
+    </div>
+
+    <div class="middle-box text-center loginscreen  animated fadeInDown" style="margin-top: 30px;text-align: left">
+        <form class="m-t" role="form" action="">
+            <div class="form-group"  style="">
+                手机号码：<input type="text" class="form-control" style="display: inline;width: 60%" placeholder="手机号码" required="" name="phone" />
+            </div>
+            <div id="submit" class="btn btn-primary  m-b">确定</div>
+        </form>
+    </div>
+<script>
+    $("#submit").click(function () {
+        var phone    = $('[name=phone]').val();
+        $.post("",
+            {
+                phone:phone,
+            },
+            function(data){
+                layer.msg(data.msg);
+
+            });
+    })
+</script>
+</body>
+</html>

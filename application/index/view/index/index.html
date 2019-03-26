@@ -1,0 +1,236 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>chat</title>
+<link rel="stylesheet" href="/static/layui/css/layui.css" media="all">
+<link rel="stylesheet" href="/static/layui/css/layui.mobile.css" media="all">
+<link href="/static/layui/css/modules/layer/default/layer.css" rel="stylesheet">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no" />。
+<script src="/static/admin/js/jquery.min.js"></script>
+<script src="/static/layui/lay/modules/layer.js"></script>
+<script src="/static/layui/layui.js"></script>
+
+</head>
+<body >
+
+<script type="text/javascript">
+    //localStorage.clear();
+layui.use('mobile', function(layim){
+    var mobile = layui.mobile
+        ,layim = mobile.layim;
+    //基础配置
+    $.ajax({
+        type:"get",
+        url:"/index/index/getList",
+        success : function(data){console.log(data);
+            layim.config({
+                //获取主面板列表信息
+                init: data.data
+                /*//获取群员接口
+                ,members: {
+                    url: "{:url('index/getMembers')}" //接口地址（返回的数据格式见下文）
+                    ,type: 'get' //默认get，一般可不填
+                    ,data: {} //额外参数
+                }*/
+                ,uploadFile: {
+                    url: "{:url('upload/uploadFile')}"
+                }
+                ,uploadImage: {
+                    url: "{:url('upload/uploadimg')}"
+                }
+                ,brief: false //是否简约模式（默认false，如果只用到在线客服，且不想显示主面板，可以设置 true）
+                ,title: '我的聊天室' //主面板最小化后显示的名称
+                ,maxLength: 3000 //最长发送的字符长度，默认3000
+                ,isgroup: true //是否开启群组（默认true，即开启）
+                ,chatLog: "{:url('Chatlog/index')}" //聊天记录地址（如果未填则不显示）
+                ,find: "{:url('findgroup/index')}" //查找好友/群的地址（如果未填则不显示）
+                ,copyright: false //是否授权，如果通过官网捐赠获得LayIM，此处可填true
+                ,isNewFriend : true //是否在联系人面板开启新的朋友
+                //扩展“更多”的自定义列表，下文会做进一步介绍（如果无需扩展，剔除该项即可）
+                ,moreList: [{
+                    alias: 'personal'
+                    ,title: '个人信息'
+                    ,iconUnicode: '&#xe66f;' //图标字体的unicode，可不填
+                    ,iconClass: '' //图标字体的class类名
+                },{
+                    alias: 'recharge'
+                    ,title: '充值<span style="float: right">余额：{$uinfo.money} 元</span>'
+                    ,iconUnicode: '&#xe648;' //图标字体的unicode，可不填
+                    ,iconClass: '' //图标字体的class类名
+                },{
+                    alias: 'withdrawcash'
+                    ,title: '提现'
+                    ,iconUnicode: '&#xe616;' //图标字体的unicode，可不填
+                    ,iconClass: '' //图标字体的class类名
+                },{
+                    alias: 'friend'
+                    ,title: '好友请求'
+                    ,iconUnicode: '&#xe770;' //图标字体的unicode，可不填
+                    ,iconClass: '' //图标字体的class类名
+                },{
+                    alias: 'logout'
+                    ,title: '退出登录'
+                    ,iconUnicode: '&#x1006;' //图标字体的unicode，可不填
+                    ,iconClass: '' //图标字体的class类名
+                }]
+
+            });
+        }
+    });
+
+	//建立WebSocket通讯
+	var socket = new WebSocket('ws://__ip__:7272');
+
+	//连接成功时触发
+	socket.onopen = function(){
+		// 登录
+        var login_data = '{"type":"init","id":"{$uinfo.id}","username":"{$uinfo.username}","avatar":"{$uinfo.avatar}","sign":"{$uinfo.sign}"}';
+        socket.send( login_data );
+		//console.log( login_data );
+        console.log("websocket握手成功!"); 
+	};
+
+	//监听收到的消息
+	socket.onmessage = function(res){
+		//console.log(res.data);
+		var data = eval("("+res.data+")");
+        switch(data['message_type']){
+            // 服务端ping客户端
+            case 'ping':
+            	socket.send('{"type":"ping"}');
+                break;
+            // 登录 更新用户列表
+            case 'init':
+                //console.log(data['id']+"登录成功");
+                //layim.getMessage(res.data); //res.data即你发送消息传递的数据（阅读：监听发送的消息）
+                break;
+            //添加 用户
+            case 'addUser':
+                //console.log(data.data);
+                layim.addList(data.data);
+                break;
+            //删除 用户
+            case 'delUser':
+                layim.removeList({
+                    type: 'friend'
+                    ,id: data.data.id //好友或者群组ID
+                });
+                break;
+			// 添加 分组信息
+            case 'addGroup':
+               // console.log(data.data);
+                layim.addList(data.data);
+                break;
+            case 'delGroup':
+                layim.removeList({
+                    type: 'group'
+                    ,id: data.data.id //好友或者群组ID
+                });
+                break;
+            // 检测聊天数据
+            case 'chatMessage':
+            	//console.log(data.data);
+                layim.getMessage(data.data);
+                break;
+            // 离线消息推送
+            case 'logMessage':
+                setTimeout(function(){layim.getMessage(data.data)}, 1000);
+                break;
+            // 用户退出 更新用户列表
+            case 'logout':
+            	break;
+            //聊天还有不在线
+            case 'ctUserOutline':
+            	console.log('11111');
+            	//layer.msg('好友不在线', {'time' : 1000});
+            	break;
+               
+        }
+	};
+
+	//layim建立就绪
+	layim.on('ready', function(res){
+
+        layim.on('sendMessage', function(res){
+            //console.log(res);
+            // 发送消息
+            var mine = JSON.stringify(res.mine);
+            var to = JSON.stringify(res.to);
+            var login_data = '{"type":"chatMessage","data":{"mine":'+mine+', "to":'+to+'}}';
+            socket.send( login_data );
+
+        });
+    });
+
+    //监听点击更多列表
+    layim.on('moreList', function(obj){
+        switch(obj.alias){ //alias即为上述配置对应的alias
+            case 'logout': //退出登录
+                layer.confirm('确认退出吗？',function () {
+                    window.location.href = '/index/login/logout';
+                });
+                break;
+            case 'friend': //好友请求
+                window.location.href = '/index/friend/requestList';
+                break;
+            case 'personal': //个人信息
+                window.location.href = '/index/personal/edituser';
+                break;
+            case 'recharge': //充值
+                layui['layer-mobile'].open({
+                    content:
+                        '<p style="padding-bottom: 5px;">充值一定要请联系微信号：13343423029</p>' +
+                        '<img style="width: 50%" src="/static/layui/images/pay/alipay_icon.png" lay-filter="ali" layim-event="moreList" >'+
+                        '<img style="width: 50%" src="/static/layui/images/pay/wechat_icon.png" lay-filter="wechat" layim-event="moreList">' +
+                        '<div style="width: 50%;text-align: center;float: left;">支付宝</div><div style="width: 50%;text-align: center;float: left;">微信</div>'
+                    ,className: 'layim-about'
+                    ,shadeClose: false
+                    ,btn: '我知道了'
+                });
+                break;
+            case 'withdrawcash': //提现
+                layui['layer-mobile'].open({
+                    content: '<p style="padding-bottom: 5px;">请联系客服号微信号：13343423029</p>'
+                    ,className: 'layim-about'
+                    ,shadeClose: false
+                    ,btn: '我知道了'
+                });
+                break;
+            case 'ali': //提现
+                layui['layer-mobile'].open({
+                    content:
+                        '<img style="width: 100%" src="/static/layui/images/pay/alipay.jpg" >'+
+                        '<div style="width: 100%;text-align: center;float: left;">支付宝</div>'
+                    ,className: 'layim-about'
+                    ,shadeClose: false
+                    ,btn: '我知道了'
+                });
+                break;
+            case 'wechat': //提现
+                layui['layer-mobile'].open({
+                    content:
+                        '<img style="width: 100%" src="/static/layui/images/pay/wechat.jpg" >'+
+                        '<div style="width: 100%;text-align: center;float: left;">微信</div>'
+                    ,className: 'layim-about'
+                    ,shadeClose: false
+                    ,btn: '我知道了'
+                });
+                break;
+        }
+        function pay() {
+            alert(111);
+        }
+    });
+    //监听新的朋友事件
+    layim.on('newFriend',function () {
+        window.location.href = '/index/friend/addFriend';
+    });
+
+
+});    
+</script>
+
+</body>
+
+</html>

@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>聊天室注册</title>
+    <link rel="shortcut icon" href="favicon.ico">
+    <link href="/static/admin/css/bootstrap.min.css?v=3.3.6" rel="stylesheet">
+    <link href="/static/admin/css/font-awesome.min.css?v=4.4.0" rel="stylesheet">
+
+    <link href="/static/admin/css/animate.min.css" rel="stylesheet">
+    <link href="/static/admin/css/style.min.css?v=4.1.0" rel="stylesheet">
+
+    <!--[if lt IE 9]>
+    <meta http-equiv="refresh" content="0;ie.html" />
+    <![endif]-->
+    <script>if(window.top !== window.self){ window.top.location = window.location;}</script>
+</head>
+
+<body class="gray-bg">
+
+<div class="middle-box text-center loginscreen  animated fadeInDown">
+    <div>
+        <h3>用户注册</h3>
+        <form class="m-t" role="form" action="">
+            <div class="form-group">
+                <input type="text" class="form-control" placeholder="用户名" required="" name="username" />
+            </div>
+            <div class="form-group">
+                <input type="password" class="form-control" placeholder="密码" required="" name="pwd" />
+            </div>
+            <div class="form-group" >
+                <input type="text" id="phone" class="infos form-control"  name="phone" placeholder="手机号码" />
+
+            </div>
+            <div class="form-group div-phone" style="text-align: left">
+                <input type="text" class="form-control" style=" width:60%;display: inline"placeholder="验证码" required="" name="code" />
+                <a href="javascript:;" class="send1" onclick="sends.send();">发送验证码</a>
+            </div>
+            <div id="submit" class="btn btn-primary block full-width m-b">确 认</div>
+            <a class="btn btn-success block full-width m-b" href="{:url('login/index')}">已有账号，直接登录</a><br>
+            <a href="{:url('login/resetPassword')}">忘记密码？<a/>
+        </form>
+    </div>
+</div>
+<script src="/static/admin/js/jquery.min.js?v=2.1.4"></script>
+<script src="/static/admin/js/bootstrap.min.js?v=3.3.6"></script>
+<script src="/static/layui/lay/modules/layer.js?v=3.1.1"></script>
+
+<script>
+    $("#submit").click(function () {
+        var username = $('[name=username]').val();
+        var pwd      = $('[name=pwd]').val();
+        var code     = $('[name=code]').val();
+        var phone    = $('[name=phone]').val();
+        $.post("",
+            {
+                username:username,
+                pwd:pwd,
+                code:code,
+                phone:phone,
+            },
+            function(data){
+                layer.msg(data.msg);
+                if(data.code==1){
+                    window.setTimeout(function (){window.location.href=data.url},2000);
+                }
+            });
+
+    })
+</script>
+<script>
+    var sends = {
+        checked:1,
+        send:function(){
+            var numbers = /^1\d{10}$/;
+            var val = $('#phone').val().replace(/\s+/g,""); //获取输入手机号码
+            if(sends.checked==0){
+                return false;
+            }
+            if($('.div-phone a').attr('class') == 'send1'){
+                if(!numbers.test(val) || val.length ==0){
+                    layer.alert('手机格式错误');
+                    return false;
+                }
+            }
+            //  请求短信接口
+            $.post("/index/login/sendMessageRegister",
+                {
+                    phone:val
+                },
+                function(data){
+                });
+            if(numbers.test(val)){
+                var time = 30;
+                $('.div-phone span').remove();
+                function timeCountDown(){
+                    if(time==0){
+                        clearInterval(timer);
+                        $('.div-phone a').addClass('send1').removeClass('send0').html("发送验证码");
+                        sends.checked = 1;
+                        return true;
+                    }
+                    $('.div-phone a').html(time+"S后再次发送");
+                    time--;
+                    sends.checked = 0;
+                    return false;
+                }
+                $('.div-phone a').addClass('send0').removeClass('send1');
+                timeCountDown();
+                var timer = setInterval(timeCountDown,1000);
+            }
+        }
+    }
+</script>
+</body>
+</html>

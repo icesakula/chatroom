@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的群组</title>
+    <link rel="shortcut icon" href="favicon.ico">
+    <link href="/static/admin/css/bootstrap.min.css?v=3.3.6" rel="stylesheet">
+    <link href="/static/admin/css/font-awesome.min.css?v=4.4.0" rel="stylesheet">
+    <link href="/static/admin/css/animate.min.css" rel="stylesheet">
+    <link href="/static/admin/css/style.min.css?v=4.1.0" rel="stylesheet">
+    <link rel="stylesheet" href="/static/layui/css/layui.mobile.css" media="all">
+</head>
+<body class="gray-bg">
+<div class="wrapper wrapper-content  animated fadeInRight">
+    <div class="row">
+        <div class="col-sm-12">
+            <div class="ibox">
+                <div class="ibox-content">
+                    <a href="javascript:history.back()"> <<< 后退</a>
+                    <h2>群组成员 </h2>
+
+                    <div class="clients-list">
+                        <ul class="nav nav-tabs">
+                            {if !empty($group)}
+                            {foreach name="group" item="vo" key="key"}
+                            <li {if condition="$key eq 0"}class="active"{/if} data="{$vo.id}">
+                            <a data-toggle="tab" href="#tab-1" onclick="javascript:show({$vo.id});">
+                                <i class="fa fa-user"></i> {$vo.groupname}</a>
+                            </li>
+                            {/foreach}
+                            {/if}
+                        </ul>
+                        <div class="tab-content">
+                            <div id="tab-1" class="tab-pane active">
+                                <div class="full-height-scroll">
+                                    <div class="table-responsive">
+                                        <table class="table table-striped table-hover">
+                                            <tbody id="showusers">
+                                            {if !empty($users)}
+                                            {foreach name="users" item="vo"}
+                                            <tr>
+                                                <td class="client-avatar"><img alt="image" src="{$vo.useravatar}"> </td>
+                                                <td>{$vo.username}</td>
+                                                <td> <a href="javascript:addFriend({$vo.userid});">添加好友</a></td>
+                                                <?php if($vo['userid']==session('uid')){?>
+                                                <td> <a href="javascript:setNickname({$vo.userid});">备注名称</a></td>
+                                                <?php }else{?>
+                                                <td></td>
+                                                <?php }?>
+                                            </tr>
+                                            {/foreach}
+                                            {/if}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script src="/static/admin/js/jquery.min.js?v=2.1.4"></script>
+<script src="/static/admin/js/bootstrap.min.js?v=3.3.6"></script>
+<script src="/static/admin/js/plugins/slimscroll/jquery.slimscroll.min.js"></script>
+<script src="/static/admin/js/content.min.js?v=1.0.0"></script>
+<script src="/static/admin/js/plugins/layer/layer.min.js"></script>
+<link rel="stylesheet" type="text/css" href="/static/admin/js/plugins/zTree/zTreeStyle.css" />
+<script type="text/javascript" src="/static/admin/js/plugins/zTree/jquery.ztree.core-3.5.js"></script>
+<script type="text/javascript" src="/static/admin/js/plugins/zTree/jquery.ztree.excheck-3.5.js"></script>
+<script type="text/javascript" src="/static/admin/js/plugins/zTree/jquery.ztree.exedit-3.5.js"></script>
+<script type="text/javascript">
+    function addFriend($id){
+        $.post("",
+            {
+                id:$id,
+            },
+            function(data){
+                layer.msg(data.msg);
+
+            });
+    }
+    function setNickname(id){
+        $.getJSON("/index/findgroup/findNickname", {id:id,group_id:$('.active').attr('data')}, function(res){
+            if(res.code == 1){
+                var url = '/index/findgroup/setnickname/id/'+id+'/group_id/'+$('.active').attr('data');
+                if(res.msg){
+                    url += '/name/'+res.msg;
+                }
+                //页面层
+                layer.open({
+                    type: 2,
+                    title: '修改备注',
+                    shadeClose: true,
+                    shade: false,
+                    maxmin: false, //开启最大化最小化按钮
+                    area: ['300px', '300px'],
+                    content: url,
+                });
+
+            }else{
+                layer.alert(res.msg, {'icon' : 2});
+            }
+        })
+    }
+</script>
+</body>
+</html>
